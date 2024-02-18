@@ -1,8 +1,5 @@
-import time
-import pandas as pd
 import bs4
 import requests
-import datetime
 
 def get_soup(url: str):
     """ ### get_soup
@@ -44,7 +41,7 @@ def load_soap_data(soap_data, proposicao:int, ano:int):
 
     return dados
 
-def get_data():
+def get_data(ano: int = 2003):
     """### get_data
     Obtém dados a partir do web scraping da pagina *legislador*
     """
@@ -52,32 +49,27 @@ def get_data():
     # define mecanismos de manipulação da URL
     url_base = "https://www.legislador.com.br//LegisladorWEB.ASP?WCI=ProposicaoTexto&ID=3&TPProposicao=1&nr"
     url_dynamic =  lambda prop, ano: f'{url_base}Proposicao={prop}&aaProposicao={ano}'
+    
+    results = [] # inicializa variável que armazenará a lista de proposições
+    proposicao_count = 1 # define o contador inicial da proposição
 
-    # define dadas de inicio e fim da execução
-    end_year = datetime.datetime.now().year + 1
-    start_year = 2022
+    # faz uma scraping inicial para identificar se houve alguma proposição naquele ano
+    raw_data = get_soup( url_dynamic(proposicao_count, ano) )
+    has_data = len(raw_data.findAll('dt')) > 0
 
-    result = []
+    # se houver dados para o ano/proposição, continua
+    while has_data:
+        # adiciona o último resultado a lista de proposições
+        results.append(load_soap_data(raw_data, proposicao_count, ano))
 
-    for ano in range(start_year, end_year):
-        proposicao = 1
-        raw_data = get_soup( url_dynamic(proposicao, ano) )
+        raw_data = get_soup( url_dynamic(proposicao_count, ano) )
         has_data = len(raw_data.findAll('dt')) > 0
 
-        while has_data:
-
-            # para o processo apenas para agilizar os testes
-            if proposicao >= 11: break
-
-            result.append(load_soap_data(raw_data, proposicao, ano))
-
-            proposicao += 1
-            raw_data = get_soup( url_dynamic(proposicao, ano) )
-            has_data = len(raw_data.findAll('dt')) > 0
-
-            print('proposicao:', f'{ano}-{proposicao}', end='\r')
-
-        print(f'Total de Preposições em {ano}:', proposicao)
+        print('proposicao:', f'{ano}-{proposicao_count}', end='\r')
+        proposicao_count += 1
 
 
-    return result
+    print(f'Total de Preposições em {ano}:', proposicao_count-1)
+
+
+    return results
