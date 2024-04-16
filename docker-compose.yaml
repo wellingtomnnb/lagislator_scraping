@@ -1,0 +1,14 @@
+version: '1'
+services:
+  mongodb:
+    image: mongo:7.0.0
+    container_name: mongodb
+    volumes:
+      - ./database:/data/db
+    environment:
+      - TZ=America/Sao_Paulo
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=scraping
+    ports:
+      - 27017:27017 
+    restart: always
